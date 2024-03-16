@@ -1,0 +1,180 @@
+stages:
+  - build
+
+default:
+  image: gitklab.ru:5050/twelv/pgups_ci/pgups_ci:latest
+  tags:
+    - docker
+
+build-job-cbp-win:
+  stage: build
+  allow_failure: true
+  rules:
+    - exists:
+        - "*.cbp"
+  before_script:
+    - cbp2make -cfg /etc/cbp2make/windows.cfg -in *.cbp -unix -out Makefile
+  script:
+    - make
+  artifacts:
+    paths:
+      - bin
+    exclude:
+
+build-job-cbp-unix:
+  stage: build
+  allow_failure: true
+  rules:
+    - exists:
+        - "*.cbp"
+  before_script:
+    - cbp2make -cfg /etc/cbp2make/unix.cfg -in *.cbp -unix -out Makefile
+  script:
+    - make
+  artifacts:
+    paths:
+      - bin
+    exclude:
+
+build-job-sln-win-gcc:
+  stage: build
+  allow_failure: true
+  rules:
+    - exists:
+        - "*.sln"
+  before_script:
+    - cmake-converter -s *.sln
+  script:
+    - cmake -S . -B build -D CMAKE_C_COMPILER=x86_64-w64-mingw32-gcc -D CMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++
+    - cmake --build build
+  artifacts:
+    paths:
+      - build
+    exclude:
+      - build/CMake*
+      - build/CMakeFiles/**/*
+      - build/Makefile
+      - build/cmake_install.cmake
+
+build-job-sln-unix-gcc:
+  stage: build
+  allow_failure: true
+  rules:
+    - exists:
+        - "*.sln"
+  before_script:
+    - cmake-converter -s *.sln
+  script:
+    - cmake -S . -B build
+    - cmake --build build
+  artifacts:
+    paths:
+      - build
+    exclude:
+      - build/CMake*
+      - build/CMakeFiles/**/*
+      - build/Makefile
+      - build/cmake_install.cmake
+  
+build-job-sln-win-msbuild:
+  stage: build
+  allow_failure: true
+  rules:
+    - exists:
+        - "*.sln"
+  tags:
+    - windows
+    - msbuild
+  before_script:
+  script:
+    - Get-ChildItem -Recurse *.sln | ForEach-Object $_ { msbuild $_ }
+  artifacts:
+    paths:
+      - x64
+      - x86
+    exclude:
+      - '*.pdb'
+
+build-job-make-win:
+  stage: build
+  allow_failure: true
+  rules:
+    - exists:
+        - "Makefile"
+  before_script:
+  script:
+    - make
+  artifacts:
+    paths:
+      - ./**/*.exe
+    exclude:
+
+build-job-make-unix:
+  stage: build
+  allow_failure: true
+  rules:
+    - exists:
+        - "Makefile"
+  before_script:
+  script:
+    - make
+  artifacts:
+    paths:
+      - ./**/*
+    exclude:
+      - ./**/*.o
+      - Makefile
+
+build-job-cmake-win:
+  stage: build
+  allow_failure: true
+  rules:
+    - exists:
+        - "CMakeLists.txt"
+  before_script:
+  script:
+    - cmake -S . -B build -D CMAKE_C_COMPILER=x86_64-w64-mingw32-gcc -D CMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++
+    - cmake --build build
+  artifacts:
+    paths:
+      - build
+    exclude:
+      - build/CMake*
+      - build/CMakeFiles/**/*
+      - build/Makefile
+      - build/cmake_install.cmake
+
+build-job-cmake-unix:
+  stage: build
+  allow_failure: true
+  rules:
+    - exists:
+        - "CMakeLists.txt"
+  before_script:
+  script:
+    - cmake -S . -B build
+    - cmake --build build
+  artifacts:
+    paths:
+      - build
+    exclude:
+      - build/CMake*
+      - build/CMakeFiles/**/*
+      - build/Makefile
+      - build/cmake_install.cmake
+
+build-job-nbs-unix:
+  stage: build
+  allow_failure: true
+  rules:
+    - exists:
+        - "nbs.cpp"
+  before_script:
+  script:
+    - g++ -std=c++17 nbs.cpp -o nbs
+    - ./nbs
+  artifacts:
+    paths:
+      - build
+    exclude:
+      - build/*.o
