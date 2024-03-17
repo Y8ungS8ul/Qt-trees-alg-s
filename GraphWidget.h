@@ -1,0 +1,5 @@
+
+#ifndef GRAPHWIDGET_H
+#define GRAPHWIDGET_H
+
+#endif // GRAPHWIDGET_H
